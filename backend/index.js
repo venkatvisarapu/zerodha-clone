@@ -21,34 +21,23 @@ const MONGO_URL = process.env.mongo_url;
 
 // --- 4. MIDDLEWARE ---
 
-// Load URLs from environment variables for production, with fallbacks for local development
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5174';
 
-// Add logging to verify the URLs being used by CORS
-console.log("--- CORS Configuration ---");
-console.log("Allowed Frontend URL:", FRONTEND_URL);
-console.log("Allowed Dashboard URL:", DASHBOARD_URL);
-if (!process.env.FRONTEND_URL || !process.env.DASHBOARD_URL) {
-    console.warn("⚠️ WARNING: FRONTEND_URL or DASHBOARD_URL not set in environment. Using localhost fallbacks.");
-}
-console.log("--------------------------");
-
-// Robust CORS options
 const corsOptions = {
   origin: [FRONTEND_URL, DASHBOARD_URL],
   credentials: true
 };
+
+// Use the CORS middleware for all routes.
+// Express will automatically handle pre-flight (OPTIONS) requests.
 app.use(cors(corsOptions));
 
 app.use(bodyparser.json());
-
-// This is necessary for Render's proxy to work with secure cookies in production
 app.set('trust proxy', 1);
 
-// Environment-aware session cookie configuration
 app.use(session({
-  secret: "a-very-strong-and-secret-key-that-you-should-change",
+  secret: "your-very-strong-and-secret-key-that-you-should-change",
   resave: false,
   saveUninitialized: false,
   cookie: {
