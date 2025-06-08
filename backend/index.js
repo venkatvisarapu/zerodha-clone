@@ -30,11 +30,17 @@ app.use(cors({
 }));
 
 
+app.set('trust proxy', 1); // required on Render/HTTPS
+
 app.use(session({
-  secret: "a-simple-secret-for-local-testing",
+  secret: process.env.SESSION_SECRET || "your-secret",
   resave: false,
   saveUninitialized: false,
-  
+  cookie: {
+    secure: true,           // HTTPS only
+    httpOnly: true,
+    sameSite: "none"        // allow cross-site cookies
+  }
 }));
 app.use(bodyparser.json());
 
