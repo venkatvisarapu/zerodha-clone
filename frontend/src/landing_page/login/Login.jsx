@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
-  // IMPORTANT: Tell axios to send cookies with every request
   axios.defaults.withCredentials = true;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      // Send login request to the backend
-      await axios.post('http://localhost:3002/login', { email, password });
-      // If login is successful, redirect to the dashboard
-      // IMPORTANT: Since dashboard is a different app, we use window.location.href
-      window.location.href = 'http://localhost:5174'; // Your dashboard's URL
+      await axios.post(`${import.meta.env.VITE_API_URL}/login`, { email, password });
+      // --- THIS IS THE FIX: Redirect to dashboard port (default 5173 for Vite) ---
+      window.location.href = 'http://localhost:5174';
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
       console.error('Login failed:', err);
     }
   };
@@ -33,6 +29,7 @@ function Login() {
           <label>Email</label>
           <input
             type="email"
+            name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -43,6 +40,7 @@ function Login() {
           <label>Password</label>
           <input
             type="password"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

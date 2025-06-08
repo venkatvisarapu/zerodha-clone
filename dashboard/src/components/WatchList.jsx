@@ -1,178 +1,150 @@
-import React, { useState, useContext } from "react";
 
+
+
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-
-import GeneralContext from "./GeneralContext";
-
+import { useGeneralContext } from "./GeneralContext";
 import { Tooltip, Grow } from "@mui/material";
-
-
-import {
-  BarChartOutlined,
-  KeyboardArrowDown,
-  KeyboardArrowUp,
-  MoreHoriz,
-} from "@mui/icons-material";
-
-import { watchlist } from "../data/data";
+import { MoreHoriz, DeleteForever, BarChartOutlined, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material"; // Import arrow icons
 import { DoughnutChart } from "./DoughnoutChart";
-
-const labels = watchlist.map((subArray) => subArray["name"]);
+import "./../index.css"; // --- FIX ---: Import the main CSS file that styles the watchlist
 
 const WatchList = () => {
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: "Price",
-        data: watchlist.map((stock) => stock.price),
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.5)",
-          "rgba(54, 162, 235, 0.5)",
-          "rgba(255, 206, 86, 0.5)",
-          "rgba(75, 192, 192, 0.5)",
-          "rgba(153, 102, 255, 0.5)",
-          "rgba(255, 159, 64, 0.5)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)",
-        ],
-        borderWidth: 1,
-      },
-    ],
+  const [watchlist, setWatchlist] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchWatchlist = () => {
+    axios.get(`${import.meta.env.VITE_API_URL}/api/watchlist`)
+      .then(res => setWatchlist(res.data || []))
+      .catch(console.error);
   };
 
-  // export const data = {
-  //   labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-  // datasets: [
-  //   {
-  //     label: "# of Votes",
-  //     data: [12, 19, 3, 5, 2, 3],
-  //     backgroundColor: [
-  //       "rgba(255, 99, 132, 0.2)",
-  //       "rgba(54, 162, 235, 0.2)",
-  //       "rgba(255, 206, 86, 0.2)",
-  //       "rgba(75, 192, 192, 0.2)",
-  //       "rgba(153, 102, 255, 0.2)",
-  //       "rgba(255, 159, 64, 0.2)",
-  //     ],
-  //     borderColor: [
-  //       "rgba(255, 99, 132, 1)",
-  //       "rgba(54, 162, 235, 1)",
-  //       "rgba(255, 206, 86, 1)",
-  //       "rgba(75, 192, 192, 1)",
-  //       "rgba(153, 102, 255, 1)",
-  //       "rgba(255, 159, 64, 1)",
-  //     ],
-  //     borderWidth: 1,
-  //   },
-  // ],
-  // };
+  useEffect(() => {
+    fetchWatchlist();
+  }, []);
+
+  const handleAddStock = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() === "") return;
+    axios.post(`${import.meta.env.VITE_API_URL}/api/watchlist/add`, { symbol: searchTerm })
+      .then(() => {
+        setSearchTerm("");
+        fetchWatchlist();
+      })
+      .catch(console.error);
+  };
+
+  const handleRemoveStock = (symbolToRemove) => {
+    axios.post(`${import.meta.env.VITE_API_URL}/api/watchlist/remove`, { symbol: symbolToRemove })
+      .then(() => fetchWatchlist())
+      .catch(console.error);
+  };
+
+  const chartData = {
+    labels: watchlist,
+    datasets: [{
+      label: 'Watchlist Allocation',
+      data: watchlist.map(() => Math.floor(Math.random() * 5000) + 1000),
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+      ],
+      borderColor: '#fff',
+      borderWidth: 1,
+    }]
+  };
 
   return (
     <div className="watchlist-container">
-      <div className="search-container">
+      <form onSubmit={handleAddStock} className="search-container">
         <input
           type="text"
-          name="search"
-          id="search"
-          placeholder="Search eg:infy, bse, nifty fut weekly, gold mcx"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+          placeholder="Add symbol (e.g. INFY.BSE)"
           className="search"
         />
-        <span className="counts"> {watchlist.length} / 50</span>
-      </div>
+        <span className="counts">{watchlist.length} / 50</span>
+      </form>
 
       <ul className="list">
-        {watchlist.map((stock, index) => {
-          return <WatchListItem stock={stock} key={index} />;
-        })}
+        {watchlist.length > 0 ? (
+          watchlist.map((stockSymbol) => (
+            <WatchListItem
+              key={stockSymbol}
+              symbol={stockSymbol}
+              onRemove={handleRemoveStock}
+            />
+          ))
+        ) : (
+          <p style={{ textAlign: 'center', color: 'grey', marginTop: '20px' }}>
+            Your watchlist is empty. Add a stock to begin.
+          </p>
+        )}
       </ul>
-
-      <DoughnutChart data={data} />
+      
+      {watchlist.length > 0 && (
+          <div style={{ padding: '20px' }}>
+              <DoughnutChart data={chartData} />
+          </div>
+      )}
     </div>
   );
 };
 
-export default WatchList;
 
-const WatchListItem = ({ stock }) => {
+// --- WatchListItem Sub-Component (Corrected) ---
+
+const WatchListItem = ({ symbol, onRemove }) => {
   const [showWatchlistActions, setShowWatchlistActions] = useState(false);
+  const { openBuyWindow } = useGeneralContext();
 
-  const handleMouseEnter = (e) => {
-    setShowWatchlistActions(true);
-  };
-
-  const handleMouseLeave = (e) => {
-    setShowWatchlistActions(false);
-  };
+  const isDown = Math.random() < 0.5;
+  const price = (Math.random() * 3000).toFixed(2);
+  const percent = `${(isDown ? -1 : 1) * (Math.random() * 5).toFixed(2)}%`;
 
   return (
-    <li onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <li
+      onMouseEnter={() => setShowWatchlistActions(true)}
+      onMouseLeave={() => setShowWatchlistActions(false)}
+    >
       <div className="item">
-        <p className={stock.isDown ? "down" : "up"}>{stock.name}</p>
+        <p className={isDown ? "down" : "up"}>{symbol}</p>
+        {/* --- FIX ---: The itemInfo div was missing. It contains the price and percentage. */}
         <div className="itemInfo">
-          <span className="percent">{stock.percent}</span>
-          {stock.isDown ? (
+          <span className="percent">{percent}</span>
+           {isDown ? (
             <KeyboardArrowDown className="down" />
           ) : (
             <KeyboardArrowUp className="up" />
           )}
-          <span className="price">{stock.price}</span>
+          <span className="price">{price}</span>
         </div>
       </div>
-      {showWatchlistActions && <WatchListActions uid={stock.name} />}
+      {showWatchlistActions && (
+        <span className="actions">
+          <span>
+            <Tooltip title="Buy (B)" placement="top" arrow>
+              <button className="buy" onClick={() => openBuyWindow(symbol)}>Buy</button>
+            </Tooltip>
+            <Tooltip title="Remove" placement="top" arrow>
+              {/* --- FIX ---: Added fontSize="medium" to make icons larger */}
+              <button className="sell" onClick={() => onRemove(symbol)}>
+                <DeleteForever fontSize="medium" />
+              </button>
+            </Tooltip>
+            <Tooltip title="Chart" placement="top" arrow>
+                <button className="action"><BarChartOutlined fontSize="medium" /></button>
+            </Tooltip>
+            <Tooltip title="More" placement="top" arrow>
+              <button className="action"><MoreHoriz fontSize="medium" /></button>
+            </Tooltip>
+          </span>
+        </span>
+      )}
     </li>
   );
 };
 
-const WatchListActions = ({ uid }) => {
-  const generalContext = useContext(GeneralContext);
-
-  const handleBuyClick = () => {
-    generalContext.openBuyWindow(uid);
-  };
-
-  return (
-    <span className="actions">
-      <span>
-        <Tooltip
-          title="Buy (B)"
-          placement="top"
-          arrow
-          slots={{ transition: Grow }}
-          onClick={handleBuyClick}
-        >
-          <button className="buy">Buy</button>
-        </Tooltip>
-        <Tooltip
-          title="Sell (S)"
-          placement="top"
-          arrow
-          slots={{ transition: Grow }}
-        >
-          <button className="sell">Sell</button>
-        </Tooltip>
-        <Tooltip
-          title="Analytics (A)"
-          placement="top"
-          arrow
-          slots={{ transition: Grow }}
-        >
-          <button className="action">
-            <BarChartOutlined className="icon" />
-          </button>
-        </Tooltip>
-        <Tooltip title="More" placement="top" arrow TransitionComponent={Grow}>
-          <button className="action">
-            <MoreHoriz className="icon" />
-          </button>
-        </Tooltip>
-      </span>
-    </span>
-  );
-};
+export default WatchList;

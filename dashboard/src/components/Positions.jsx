@@ -4,17 +4,32 @@ import axios from "axios";
 const Positions = () => {
   const [allPositions, setAllPositions] = useState([]);
 
+  const fetchPositions = () => {
+      axios.get(`${import.meta.env.VITE_API_URL}/allPositions`).then((res) => {
+        setAllPositions(res.data);
+      });
+  }
+
   useEffect(() => {
-    axios.get("http://localhost:3002/allPositions").then((res) => {
-      console.log(res.data);
-      setAllPositions(res.data);
-    });
+    fetchPositions();
   }, []);
+
+  const handleSquareOff = (positionId) => {
+      if(window.confirm("Are you sure you want to square off this position?")) {
+          axios.post(`${import.meta.env.VITE_API_URL}/api/square-off`, { positionId })
+            .then(res => {
+                alert(res.data.message);
+                fetchPositions();
+            })
+            .catch(err => {
+                alert("Error: Could not square off position.");
+            });
+      }
+  };
 
   return (
     <>
       <h3 className="title">Positions ({allPositions.length})</h3>
-
       <div className="order-table">
         <table>
           <thead>
@@ -25,30 +40,28 @@ const Positions = () => {
               <th>Avg.</th>
               <th>LTP</th>
               <th>P&L</th>
-              <th>Chg.</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {allPositions.map((stock, index) => {
-              const curValue = stock.price * stock.qty;
-              const isProfit = curValue - stock.avg * stock.qty >= 0.0;
-              const profClass = isProfit ? "profit" : "loss";
-              const dayClass = stock.isLoss ? "loss" : "profit";
-
-              return (
-                <tr key={index}>
-                  <td>{stock.product}</td>
-                  <td>{stock.name}</td>
-                  <td>{stock.qty}</td>
-                  <td>{stock.avg.toFixed(2)}</td>
-                  <td>{stock.price.toFixed(2)}</td>
-                  <td className={profClass}>
-                    {(curValue - stock.avg * stock.qty).toFixed(2)}
-                  </td>
-                  <td className={dayClass}>{stock.day}</td>
-                </tr>
-              );
-            })}
+            {allPositions.map((stock) => (
+              <tr key={stock._id}>
+                <td>{stock.product}</td>
+                <td>{stock.name}</td>
+                <td>{stock.qty}</td>
+                <td>{stock.avg.toFixed(2)}</td>
+                <td>{stock.price.toFixed(2)}</td>
+                <td className={((stock.price - stock.avg) * stock.qty) >= 0 ? 'profit' : 'loss'}>
+                    {((stock.price - stock.avg) * stock.qty).toFixed(2)}
+                </td>
+                <td>
+                  <button
+                    onClick={() => handleSquareOff(stock._id)}
+                    style={{ background: 'red', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer', borderRadius: '3px' }}
+                  >Square Off</button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

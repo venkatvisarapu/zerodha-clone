@@ -1,18 +1,17 @@
 import React, { useState } from "react";
-
 import { Link } from "react-router-dom";
+import { useGeneralContext } from "./GeneralContext"; // Import the custom hook
 
 const Menu = () => {
   const [selectedMenu, setSelectedMenu] = useState(0);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const { user } = useGeneralContext(); // Get the user from the now-correctly-scoped context
 
   const handleMenuClick = (index) => {
     setSelectedMenu(index);
   };
 
-  const handleProfileClick = (index) => {
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  };
+  const userAvatar = user ? user.email.substring(0, 2).toUpperCase() : "ZU";
+  const userEmail = user ? user.email : "Loading...";
 
   const menuClass = "menu";
   const activeMenuClass = "menu selected";
@@ -21,6 +20,7 @@ const Menu = () => {
     <div className="menu-container">
       <img src="logo.png" style={{ width: "50px" }} />
       <div className="menus">
+        {/* --- THIS IS THE PART THAT WAS MISSING --- */}
         <ul>
           <li>
             <Link
@@ -69,7 +69,7 @@ const Menu = () => {
           <li>
             <Link
               style={{ textDecoration: "none" }}
-              to="funds"
+              to="/funds"
               onClick={() => handleMenuClick(4)}
             >
               <p className={selectedMenu === 4 ? activeMenuClass : menuClass}>
@@ -89,10 +89,11 @@ const Menu = () => {
             </Link>
           </li>
         </ul>
+        {/* --- END OF MISSING PART --- */}
         <hr />
-        <div className="profile" onClick={handleProfileClick}>
-          <div className="avatar">ZU</div>
-          <p className="username">USERID</p>
+        <div className="profile">
+          <div className="avatar">{userAvatar}</div>
+          <p className="username">{userEmail}</p>
         </div>
       </div>
     </div>

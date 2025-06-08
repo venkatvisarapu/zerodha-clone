@@ -1,34 +1,53 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-
 import axios from "axios";
-
-import GeneralContext from "./GeneralContext";
-
+import { useGeneralContext } from "./GeneralContext"; // Import the custom hook
 import "./BuyActionWindow.css";
 
 const BuyActionWindow = ({ uid }) => {
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockPrice, setStockPrice] = useState(0.0);
+  
+  // Get the close function from our context using the hook
+  const { closeBuyWindow } = useGeneralContext();
 
   const handleBuyClick = () => {
-    axios.post("http://localhost:3002/newOrder", {
+    // Ensure credentials (session cookie) are sent with the request
+    axios.defaults.withCredentials = true;
+
+    axios.post(`${import.meta.env.VITE_API_URL}/newOrder`, {
       name: uid,
       qty: stockQuantity,
       price: stockPrice,
       mode: "BUY",
+    })
+    .then(response => {
+        console.log("Order placed successfully:", response.data);
+        alert(`Successfully placed BUY order for ${stockQuantity} ${uid}!`);
+        closeBuyWindow(); // Close window ONLY on success
+        window.location.reload(); // Refresh to see updated positions/orders
+    })
+    .catch(error => {
+        console.error("Failed to place order:", error);
+        if (error.response && error.response.status === 401) {
+          alert("Your session has expired. Please log in again.");
+          window.location.href = `${import.meta.env.VITE_LANDING_PAGE_URL}/login`;
+        } else {
+          alert(`Error: ${error.response?.data?.message || "Could not place the order."}`);
+        }
     });
-
-    GeneralContext.closeBuyWindow();
   };
 
   const handleCancelClick = () => {
-    GeneralContext.closeBuyWindow();
+    // This also uses the function from the context
+    closeBuyWindow();
   };
 
   return (
     <div className="container" id="buy-window" draggable="true">
-      <div className="regular-order">
+        <div className="header">
+            <h3>Buy {uid}</h3>
+        </div>
+      <div className="regular-order" style={{padding: '20px'}}>
         <div className="inputs">
           <fieldset>
             <legend>Qty.</legend>
@@ -36,7 +55,8 @@ const BuyActionWindow = ({ uid }) => {
               type="number"
               name="qty"
               id="qty"
-              onChange={(e) => setStockQuantity(e.target.value)}
+              min="1"
+              onChange={(e) => setStockQuantity(parseInt(e.target.value, 10))}
               value={stockQuantity}
             />
           </fieldset>
@@ -47,7 +67,7 @@ const BuyActionWindow = ({ uid }) => {
               name="price"
               id="price"
               step="0.05"
-              onChange={(e) => setStockPrice(e.target.value)}
+              onChange={(e) => setStockPrice(parseFloat(e.target.value))}
               value={stockPrice}
             />
           </fieldset>
@@ -55,14 +75,14 @@ const BuyActionWindow = ({ uid }) => {
       </div>
 
       <div className="buttons">
-        <span>Margin required ₹140.65</span>
+        <span>Margin required: ₹{(stockQuantity * stockPrice).toFixed(2)}</span>
         <div>
-          <Link className="btn btn-blue" onClick={handleBuyClick}>
+          <button className="btn btn-blue" onClick={handleBuyClick}>
             Buy
-          </Link>
-          <Link to="" className="btn btn-grey" onClick={handleCancelClick}>
+          </button>
+          <button className="btn btn-grey" onClick={handleCancelClick}>
             Cancel
-          </Link>
+          </button>
         </div>
       </div>
     </div>

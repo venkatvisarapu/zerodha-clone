@@ -11,7 +11,7 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3002/register', { email, password });
+      await axios.post(`${import.meta.env.VITE_API_URL}/register`, { email, password });
       setMessage('Registration successful! Please proceed to login.');
       // Optional: redirect to login page after a few seconds
       setTimeout(() => {
