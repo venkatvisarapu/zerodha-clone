@@ -200,6 +200,8 @@ app.post("/api/square-off", isLoggedIn, async (req, res) => {
 });
 
 // --- 9. START SERVER ---
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+const PORT_TO_USE = process.env.PORT || 3002;
+
+app.listen(PORT_TO_USE, () => {
+  console.log(`🚀 Server is running and listening on port ${PORT_TO_USE}`);
 });
