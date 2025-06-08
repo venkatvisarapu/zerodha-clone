@@ -26,11 +26,12 @@ const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5174';
 
 const corsOptions = {
   origin: [FRONTEND_URL, DASHBOARD_URL],
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // Use the CORS middleware for all routes.
-// Express will automatically handle pre-flight (OPTIONS) requests.
 app.use(cors(corsOptions));
 
 app.use(bodyparser.json());
