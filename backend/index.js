@@ -30,12 +30,35 @@ app.use(cors({
 }));
 
 
+
 app.use(bodyparser.json());
+
+app.set('trust proxy', 1); 
+
 app.use(session({
-  secret: "your-very-secret-key-for-the-love-of-code",
+  secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    // In production (on Render), use secure cookies that work across domains.
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 }));
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 

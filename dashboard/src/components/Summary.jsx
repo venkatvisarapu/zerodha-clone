@@ -6,7 +6,8 @@ const Summary = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:3002/allHoldings")
+    // --- THIS IS THE FIX ---
+    axios.get(`${import.meta.env.VITE_API_URL}/allHoldings`)
       .then(res => setHoldings(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));

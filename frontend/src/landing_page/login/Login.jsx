@@ -8,19 +8,18 @@ function Login() {
 
   axios.defaults.withCredentials = true;
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/login`, { email, password });
-      // --- THIS IS THE FIX: Redirect to dashboard port (default 5173 for Vite) ---
-      window.location.href = 'https://zerodha-clone-dashboard-six.vercel.app/';
+      // Redirect to the dashboard URL provided by the environment
+      window.location.href = import.meta.env.VITE_DASHBOARD_URL;
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
       console.error('Login failed:', err);
     }
   };
-
   return (
     <div style={{ padding: '50px', maxWidth: '400px', margin: 'auto' }}>
       <h2>Login to your Account</h2>
